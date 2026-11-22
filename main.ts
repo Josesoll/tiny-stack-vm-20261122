@@ -4,8 +4,13 @@
 // that order: (1) step limit, (2) pc in range, (3) opcode known,
 // (4) immediate fits, (5) generic stack underflow/overflow from the
 // table's pops/pushes, and only then the instruction's own trap/effect.
-// All values live in Int32Arrays, so arithmetic wraps to 32 bits for free;
-// MUL uses Math.imul to get the exact low 32 bits of the full product.
+// Values live in Int32Arrays, so ADD/SUB/NEG wrap to 32 bits for free;
+// MUL uses Math.imul for the exact low 32 bits (a JS multiply rounds
+// above 2^53). DIVU/MODU/LTU use unsigned operands (>>>0); shifts
+// mask the count with &31; DIV/MOD special-case -2147483648/-1:
+// quotient -2147483648, remainder 0. PRINT encodes first, then traps
+// 11 without writing a byte; IN is -1 past input; EXIT masks &255.
+// A jump target is never checked when taken: it traps 9 next step.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
